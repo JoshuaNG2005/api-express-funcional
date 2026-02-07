@@ -48,3 +48,12 @@ coverage/
 
 # Archivos específicos del proyecto
 verificar-db.js
+
+# Archivos sensibles - NO SUBIR NUNCA
+.env
+*.pem
+*.key
+*.cert
+
+# Archivos de configuración local
+config.local.js

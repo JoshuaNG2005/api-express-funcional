@@ -72,9 +72,12 @@ class User {
      */
     static async findByEmail(email) {
         try {
+            // Normalizar email a minúsculas para búsqueda case-insensitive
+            const normalizedEmail = email.toLowerCase().trim();
+            
             const [rows] = await pool.execute(
-                'SELECT id, nombre, email, telefono, created_at, updated_at FROM users WHERE email = ?',
-                [email]
+                'SELECT id, nombre, email, telefono, created_at, updated_at FROM users WHERE LOWER(email) = ?',
+                [normalizedEmail]
             );
             return rows.length > 0 ? rows[0] : null;
         } catch (error) {
@@ -166,9 +169,12 @@ class User {
      */
     static async findByEmailWithPassword(email) {
         try {
+            // Normalizar email a minúsculas para búsqueda case-insensitive
+            const normalizedEmail = email.toLowerCase().trim();
+            
             const [rows] = await pool.execute(
-                'SELECT * FROM users WHERE email = ?',
-                [email]
+                'SELECT * FROM users WHERE LOWER(email) = ?',
+                [normalizedEmail]
             );
             return rows.length > 0 ? rows[0] : null;
         } catch (error) {

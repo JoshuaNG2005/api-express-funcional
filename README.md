@@ -1,26 +1,25 @@
-# API REST - Gestión de Usuarios con Express y MySQL
+# 🚀 API REST - Express + MySQL + React Native
 
-Una API REST completa para gestión de usuarios desarrollada con Node.js, Express y MySQL. Incluye operaciones CRUD completas, validaciones, paginación y documentación.
+API REST completa para gestión de usuarios y autenticación, compatible con aplicaciones web y móviles (React Native + Expo).
 
-## 🚀 Características
+## ✨ Características
 
-- **Autenticación JWT**: Sistema completo de registro, login y autenticación
-- **Seguridad**: Contraseñas hasheadas con bcrypt
-- **CRUD Completo**: Crear, leer, actualizar y eliminar usuarios
-- **Base de Datos MySQL**: Conexión robusta con pool de conexiones
-- **Validaciones**: Validación completa de datos de entrada
-- **Paginación**: Listado de usuarios con paginación
-- **Búsqueda**: Búsqueda de usuarios por nombre
-- **Manejo de Errores**: Manejo centralizado de errores
-- **Documentación**: Documentación completa de la API
-- **Health Check**: Endpoint para monitoreo del estado de la aplicación
+- 🔐 **Autenticación JWT**: Sistema completo de registro y login
+- 🔒 **Seguridad**: Contraseñas hasheadas con bcrypt
+- 📱 **Multi-plataforma**: Compatible con Web y React Native/Expo
+- 🗃️ **Base de Datos MySQL**: Conexión robusta con pool de conexiones
+- ✅ **Validaciones**: Validación completa de datos de entrada
+- 📄 **Paginación**: Listado de usuarios con paginación
+- 🔍 **Búsqueda**: Búsqueda de usuarios por nombre
+- 🛡️ **CORS configurado**: Listo para desarrollo web y móvil
+- 📊 **Health Check**: Endpoint para monitoreo del estado
 
 ## 🛠️ Tecnologías
 
 - **Node.js** - Entorno de ejecución
 - **Express.js** - Framework web
 - **MySQL** - Base de datos
-- **mysql2** - Cliente MySQL con soporte para promesas
+- **mysql2** - Cliente MySQL con promesas
 - **bcryptjs** - Hash de contraseñas
 - **jsonwebtoken** - Autenticación JWT
 - **express-validator** - Validación de datos
@@ -29,65 +28,91 @@ Una API REST completa para gestión de usuarios desarrollada con Node.js, Expres
 
 ## 📋 Requisitos Previos
 
-- Node.js (versión 14 o superior)
-- MySQL (versión 5.7 o superior)
+- Node.js v14+ ([Descargar aquí](https://nodejs.org/))
+- MySQL v5.7+ ([Descargar aquí](https://dev.mysql.com/downloads/))
 - npm o yarn
 
-## ⚙️ Instalación
+## ⚙️ Configuración Inicial (IMPORTANTE)
 
-1. **Clonar el repositorio o descargar archivos**
+### 1. **Clonar el repositorio**
 
-   ```bash
-   # Si usas git
-   git clone <tu-repo>
-   cd express-mysql-crud
-   ```
+```bash
+git clone https://github.com/TU-USUARIO/api-express-mysql.git
+cd api-express-mysql
+```
 
-2. **Instalar dependencias**
+### 2. **Instalar dependencias**
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
-3. **Configurar variables de entorno**
+### 3. **Configurar variables de entorno**
 
-   Copia el archivo `.env` y configura tus variables:
+Crea un archivo `.env` copiando el ejemplo:
 
-   ```env
-   # Configuración de la aplicación
-   NODE_ENV=development
-   PORT=3000
+```bash
+# Windows
+copy .env.example .env
 
-   # Configuración de la base de datos MySQL
-   DB_HOST=localhost
-   DB_PORT=3306
-   DB_USER=root
-   DB_PASSWORD=tu_password
-   DB_NAME=usuarios_db
+# Mac/Linux
+cp .env.example .env
+```
 
-   # Configuración del servidor
-   API_PREFIX=/api/v1
-   ```
+Edita el archivo `.env` con tus datos:
 
-4. **Crear la base de datos**
+```env
+# Configuración del servidor
+PORT=3001
+NODE_ENV=development
+API_PREFIX=/api/v1
 
-   ```sql
-   -- Conectarse a MySQL y crear la base de datos
-   CREATE DATABASE usuarios_db;
-   USE usuarios_db;
+# Configuración de MySQL
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=tu_password_aqui
+DB_NAME=api_usuarios_db
+DB_PORT=3306
 
-   -- Ejecutar el script SQL que está en docs/database.sql
-   ```
+# JWT Secret (cámbiala por una clave única y segura)
+JWT_SECRET=mi_clave_super_secreta_2026
+JWT_EXPIRES_IN=24h
+```
 
-5. **Ejecutar la aplicación**
+### 4. **Crear la base de datos**
 
-   ```bash
-   # Desarrollo (con nodemon)
-   npm run dev
+Abre MySQL Workbench o tu cliente MySQL favorito y ejecuta:
 
-   # Producción
-   npm start
-   ```
+```sql
+CREATE DATABASE api_usuarios_db;
+USE api_usuarios_db;
+```
+
+Luego ejecuta el script que está en [`docs/database.sql`](docs/database.sql)
+
+**O desde terminal:**
+
+```bash
+mysql -u root -p < docs/database.sql
+```
+
+### 5. **Ejecutar la aplicación**
+
+```bash
+# Modo desarrollo
+npm run dev
+
+# O modo producción
+npm start
+```
+
+Deberías ver en consola:
+
+```
+🚀 Servidor iniciado correctamente
+🌐 URL: http://localhost:3001
+📋 API Base: http://localhost:3001/api/v1
+```
 
 ## 🗄️ Estructura del Proyecto
 

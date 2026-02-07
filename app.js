@@ -30,19 +30,19 @@ const API_PREFIX = process.env.API_PREFIX || '/api/v1';
  * CONFIGURACIÓN DE MIDDLEWARES
  */
 
-// Middleware para parsear JSON (debe ir antes de las rutas)
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Middleware para CORS
+// Middleware para CORS (DEBE IR PRIMERO, antes de parsear JSON)
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
         ? ['https://tu-dominio.com'] // Cambiar por tu dominio en producción
-        : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000'],
+        : '*', // En desarrollo, permitir cualquier origen
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
+
+// Middleware para parsear JSON (después de CORS)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middlewares personalizados
 app.use(validateContentType);

@@ -32,8 +32,11 @@ class AuthController {
 
             const { nombre, email, telefono, password } = req.body;
 
+            // Normalizar email
+            const normalizedEmail = email.toLowerCase().trim();
+
             // Verificar si el email ya existe
-            const existingUser = await User.findByEmail(email);
+            const existingUser = await User.findByEmail(normalizedEmail);
             if (existingUser) {
                 return res.status(409).json({
                     success: false,
@@ -48,7 +51,7 @@ class AuthController {
             // Crear el usuario
             const newUser = await User.create({
                 nombre,
-                email,
+                email: normalizedEmail,
                 telefono,
                 password: hashedPassword
             });
@@ -102,8 +105,25 @@ class AuthController {
 
             const { email, password } = req.body;
 
+            // 🔍 LOG DE DEBUGGING - Remover después de solucionar
+            console.log('🔐 Intento de login:', {
+                email: email,
+                emailLength: email?.length,
+                emailTrimmed: email?.trim(),
+                passwordLength: password?.length,
+                hasPassword: !!password,
+                headers: req.headers['content-type'],
+                origin: req.headers['origin']
+            });
+
+            // Normalizar email (convertir a minúsculas y trim)
+            const normalizedEmail = email.toLowerCase().trim();
+
             // Buscar usuario por email (con contraseña)
-            const user = await User.findByEmailWithPassword(email);
+            const user = await User.findByEmailWithPassword(normalizedEmail);
+            
+            // 🔍 LOG DE DEBUGGING
+            console.log('👤 Usuario encontrado:', user ? 'SÍ' : 'NO', user ? `ID: ${user.id}` : '');
             if (!user) {
                 return res.status(401).json({
                     success: false,
@@ -113,6 +133,10 @@ class AuthController {
 
             // Verificar contraseña
             const isPasswordValid = await bcrypt.compare(password, user.password);
+            
+            // 🔍 LOG DE DEBUGGING
+            console.log('🔑 Contraseña válida:', isPasswordValid);
+            
             if (!isPasswordValid) {
                 return res.status(401).json({
                     success: false,
