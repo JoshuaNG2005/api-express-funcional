@@ -7,6 +7,9 @@
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 
@@ -30,11 +33,13 @@ const API_PREFIX = process.env.API_PREFIX || '/api/v1';
  * CONFIGURACIÓN DE MIDDLEWARES
  */
 
-// Middleware para CORS (DEBE IR PRIMERO, antes de parsear JSON)
+// Helmet para seguridad HTTP headers
+app.use(helmet());
+
+// Configurar CORS dinámico mediante ALLOWED_ORIGINS en .env
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : (process.env.NODE_ENV === 'production' ? ['https://tu-dominio.com'] : ['*']);
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-        ? ['https://tu-dominio.com'] // Cambiar por tu dominio en producción
-        : '*', // En desarrollo, permitir cualquier origen
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
@@ -49,13 +54,22 @@ app.use(validateContentType);
 app.use(sanitizeInput);
 app.use(validateJSON);
 
-// Middleware para logging de requests (solo en desarrollo)
+// Morgan logger en desarrollo
 if (process.env.NODE_ENV !== 'production') {
-    app.use((req, res, next) => {
-        console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-        next();
-    });
+    app.use(morgan('dev'));
+} else {
+    app.use(morgan('combined'));
 }
+
+// Rate limiter básico para proteger endpoints
+const limiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minuto
+    max: parseInt(process.env.RATE_LIMIT_MAX || '60', 10), // requests por ventana
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, message: 'Demasiadas peticiones, intenta de nuevo más tarde' }
+});
+app.use(limiter);
 
 /**
  * CONFIGURACIÓN DE RUTAS

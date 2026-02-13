@@ -5,6 +5,30 @@
 
 const { pool } = require('../config/database');
 
+// Normaliza una fila de la BD a formato esperado por la aplicación
+function normalizeRow(row) {
+    if (!row) return null;
+    const created_at = row.fecha_creacion || row.created_at || row.fechaCreacion || null;
+    const updated_at = row.fecha_actualizacion || row.updated_at || row.fechaActualizacion || null;
+    return {
+        id: row.id,
+        nombre: row.nombre,
+        email: row.email,
+        telefono: row.telefono,
+        // password puede no estar presente en algunas consultas
+        password: row.password,
+        created_at,
+        updated_at
+    };
+}
+
+// Similar a normalizeRow pero asegurando que la contraseña permanezca
+function mapPasswordRow(row) {
+    const normalized = normalizeRow(row) || {};
+    normalized.password = row.password;
+    return normalized;
+}
+
 /**
  * Clase que representa el modelo de Usuario
  */
@@ -38,9 +62,9 @@ class User {
     static async findAll() {
         try {
             const [rows] = await pool.execute(
-                'SELECT id, nombre, email, telefono, created_at, updated_at FROM users ORDER BY created_at DESC'
+                'SELECT * FROM usuarios ORDER BY COALESCE(fecha_creacion, created_at, NOW()) DESC'
             );
-            return rows;
+            return rows.map(r => normalizeRow(r));
         } catch (error) {
             console.error('Error en User.findAll:', error);
             throw new Error('Error al obtener usuarios');
@@ -55,10 +79,10 @@ class User {
     static async findById(id) {
         try {
             const [rows] = await pool.execute(
-                'SELECT id, nombre, email, telefono, created_at, updated_at FROM users WHERE id = ?',
+                'SELECT * FROM usuarios WHERE id = ?',
                 [id]
             );
-            return rows.length > 0 ? rows[0] : null;
+            return rows.length > 0 ? normalizeRow(rows[0]) : null;
         } catch (error) {
             console.error('Error en User.findById:', error);
             throw new Error('Error al buscar usuario por ID');
@@ -74,12 +98,11 @@ class User {
         try {
             // Normalizar email a minúsculas para búsqueda case-insensitive
             const normalizedEmail = email.toLowerCase().trim();
-            
             const [rows] = await pool.execute(
-                'SELECT id, nombre, email, telefono, created_at, updated_at FROM users WHERE LOWER(email) = ?',
+                'SELECT * FROM usuarios WHERE LOWER(email) = ?',
                 [normalizedEmail]
             );
-            return rows.length > 0 ? rows[0] : null;
+            return rows.length > 0 ? normalizeRow(rows[0]) : null;
         } catch (error) {
             console.error('Error en User.findByEmail:', error);
             throw new Error('Error al buscar usuario por email');
@@ -100,7 +123,7 @@ class User {
             const { nombre, email, telefono, password } = userData;
             
             const [result] = await pool.execute(
-                'INSERT INTO users (nombre, email, telefono, password) VALUES (?, ?, ?, ?)',
+                'INSERT INTO usuarios (nombre, email, telefono, password) VALUES (?, ?, ?, ?)',
                 [nombre, email, telefono, password]
             );
 
@@ -129,7 +152,7 @@ class User {
         try {
             const { nombre, email, telefono, password } = userData;
             
-            let query = 'UPDATE users SET nombre = ?, email = ?, telefono = ?';
+            let query = 'UPDATE usuarios SET nombre = ?, email = ?, telefono = ?';
             let params = [nombre, email, telefono];
             
             // Si se proporciona una nueva contraseña, incluirla en la actualización
@@ -171,12 +194,11 @@ class User {
         try {
             // Normalizar email a minúsculas para búsqueda case-insensitive
             const normalizedEmail = email.toLowerCase().trim();
-            
             const [rows] = await pool.execute(
-                'SELECT * FROM users WHERE LOWER(email) = ?',
+                'SELECT * FROM usuarios WHERE LOWER(email) = ?',
                 [normalizedEmail]
             );
-            return rows.length > 0 ? rows[0] : null;
+            return rows.length > 0 ? mapPasswordRow(rows[0]) : null;
         } catch (error) {
             console.error('Error en User.findByEmailWithPassword:', error);
             throw new Error('Error al buscar usuario por email: ' + error.message);
@@ -209,10 +231,10 @@ class User {
     static async searchByName(nombre) {
         try {
             const [rows] = await pool.execute(
-                'SELECT id, nombre, email, telefono, created_at, updated_at FROM users WHERE nombre LIKE ? ORDER BY nombre',
+                'SELECT * FROM usuarios WHERE nombre LIKE ? ORDER BY nombre',
                 [`%${nombre}%`]
             );
-            return rows;
+            return rows.map(r => normalizeRow(r));
         } catch (error) {
             console.error('Error en User.searchByName:', error);
             throw new Error('Error al buscar usuarios por nombre');
@@ -225,7 +247,7 @@ class User {
      */
     static async count() {
         try {
-            const [rows] = await pool.execute('SELECT COUNT(*) as total FROM users');
+            const [rows] = await pool.execute('SELECT COUNT(*) as total FROM usuarios');
             return rows[0].total;
         } catch (error) {
             console.error('Error en User.count:', error);
@@ -254,7 +276,7 @@ class User {
             
             // Obtener usuarios paginados
             const [users] = await pool.execute(
-                `SELECT id, nombre, email, telefono, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ${limitInt} OFFSET ${offset}`
+                `SELECT * FROM usuarios ORDER BY COALESCE(fecha_creacion, created_at) DESC LIMIT ${limitInt} OFFSET ${offset}`
             );
 
             // Obtener total de usuarios
@@ -262,7 +284,7 @@ class User {
             const totalPages = Math.ceil(total / limitInt);
 
             return {
-                users,
+                users: users.map(r => normalizeRow(r)),
                 pagination: {
                     currentPage: pageInt,
                     totalPages,
