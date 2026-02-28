@@ -22,16 +22,16 @@ class CitaController {
      */
     static async create(req, res) {
         try {
-            // Extraemos los campos según tu última estructura de tabla
+            // Fíjate en el nombre: tipo_servicio
             const { 
                 usuario_id, id_Medicos, mascota_id, fecha, hora, 
-                tipo_servido, motivo, estado, costo 
+                tipo_servicio, motivo, estado, costo 
             } = req.body;
 
             const query = `
                 INSERT INTO citas (
                     usuario_id, id_Medicos, mascota_id, fecha, hora, 
-                    tipo_servido, motivo, estado, costo
+                    tipo_servicio, motivo, estado, costo
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             
@@ -41,17 +41,13 @@ class CitaController {
                 mascota_id, 
                 fecha, 
                 hora, 
-                tipo_servido, 
+                tipo_servicio, 
                 motivo, 
                 estado || 'pendiente', 
                 costo || 0
             ]);
 
-            res.status(201).json({ 
-                success: true, 
-                message: 'Cita agendada con éxito', 
-                id: result.insertId 
-            });
+            res.status(201).json({ success: true, message: 'Cita agendada', id: result.insertId });
         } catch (error) {
             res.status(500).json({ success: false, error: error.message });
         }
