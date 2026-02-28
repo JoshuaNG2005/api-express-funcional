@@ -1,6 +1,6 @@
 /**
  * Controlador de Usuarios
- * @description Maneja todas las operaciones HTTP para la entidad Usuario corregido para MySQL/AWS
+ * @description Maneja todas las operaciones HTTP para la entidad Usuario (MySQL - AWS)
  */
 
 const { pool: db } = require('../config/database');
@@ -11,7 +11,6 @@ class UserController {
 
     /**
      * Registra un nuevo usuario
-     * CORRECCIÓN: De 'users' a 'usuarios'
      */
     static async register(req, res) {
         const errors = validationResult(req);
@@ -24,9 +23,9 @@ class UserController {
         }
 
         try {
-            const { nombre, telefono, email, password } = req.body;
+            const { nombre, telefono, email, password, direccion } = req.body;
 
-            // CORREGIDO: Tabla usuarios
+            // Verificamos en la tabla 'usuarios'
             const [existing] = await db.query('SELECT id FROM usuarios WHERE email = ?', [email]);
             if (existing && existing.length) {
                 return res.status(409).json({
@@ -37,10 +36,10 @@ class UserController {
 
             const hashed = await bcrypt.hash(password, 10);
 
-            // CORREGIDO: Tabla usuarios
+            // Insertamos con los nombres de columnas de tu Workbench
             const [result] = await db.query(
-                'INSERT INTO usuarios (nombre, telefono, email, password) VALUES (?, ?, ?, ?)',
-                [nombre, telefono || null, email, hashed]
+                'INSERT INTO usuarios (nombre, telefono, email, password, direccion, rol, estado) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [nombre, telefono || null, email, hashed, direccion || null, 'cliente', 'activo']
             );
 
             return res.status(201).json({ 
@@ -54,42 +53,26 @@ class UserController {
             return res.status(500).json({ 
                 success: false, 
                 message: 'Error interno del servidor', 
-                error: "Error al crear usuario" 
+                error: error.message 
             });
         }
     }
 
     /**
      * Obtiene todos los usuarios
-     * CORRECCIÓN: De 'users' a 'usuarios' y campos consistentes
      */
     static async getAllUsers(req, res) {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const offset = (page - 1) * limit;
-            const search = req.query.search;
 
-            let query;
-            let queryParams;
-            let countQuery;
+            // IMPORTANTE: Se usa 'fecha_creacion' porque así está en tu BD
+            const query = 'SELECT id, nombre, email, telefono, rol, estado, fecha_creacion FROM usuarios LIMIT ? OFFSET ?';
+            const [users] = await db.query(query, [limit, offset]);
 
-            // CORREGIDO: Todas las referencias de 'users' a 'usuarios'
-            if (search) {
-                query = 'SELECT id, nombre, email, telefono, fecha_creacion FROM usuarios WHERE nombre LIKE ? LIMIT ? OFFSET ?';
-                queryParams = [`%${search}%`, limit, offset];
-                countQuery = 'SELECT COUNT(id) as total FROM usuarios WHERE nombre LIKE ?';
-            } else {
-                query = 'SELECT id, nombre, email, telefono, fecha_creacion FROM usuarios LIMIT ? OFFSET ?';
-                queryParams = [limit, offset];
-                countQuery = 'SELECT COUNT(id) as total FROM usuarios';
-            }
-
-            const [users] = await db.query(query, queryParams);
-            const [countRows] = await db.query(countQuery, search ? [`%${search}%`] : []);
-            
-            const totalUsers = countRows[0].total;
-            const totalPages = Math.ceil(totalUsers / limit);
+            const [countResult] = await db.query('SELECT COUNT(*) as total FROM usuarios');
+            const totalUsers = countResult[0].total;
 
             res.status(200).json({
                 success: true,
@@ -97,24 +80,26 @@ class UserController {
                 data: users,
                 pagination: {
                     currentPage: page,
-                    totalPages,
+                    totalPages: Math.ceil(totalUsers / limit),
                     totalUsers
                 }
             });
         } catch (error) {
-            console.error('Error en getAllUsers:', error);
-            res.status(500).json({ success: false, message: 'Error interno del servidor' });
+            console.error('Error en getAllUsers:', error.message);
+            res.status(500).json({ success: false, message: 'Error al obtener usuarios', error: error.message });
         }
     }
 
     /**
-     * Obtiene un usuario por ID
-     * CORRECCIÓN: Tabla 'usuarios'
+     * Obtiene un usuario por su ID
      */
     static async getUserById(req, res) {
         try {
             const { id } = req.params;
-            const [rows] = await db.query('SELECT id, nombre, email, telefono, fecha_creacion FROM usuarios WHERE id = ?', [id]);
+            const [rows] = await db.query(
+                'SELECT id, nombre, email, telefono, direccion, rol, estado, fecha_creacion FROM usuarios WHERE id = ?', 
+                [id]
+            );
 
             if (rows.length === 0) {
                 return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
@@ -122,13 +107,37 @@ class UserController {
 
             res.status(200).json({ success: true, data: rows[0] });
         } catch (error) {
-            res.status(500).json({ success: false, message: 'Error interno del servidor' });
+            console.error('Error en getUserById:', error.message);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    }
+
+    /**
+     * Actualiza un usuario
+     */
+    static async updateUser(req, res) {
+        try {
+            const { id } = req.params;
+            const { nombre, email, telefono, direccion, estado } = req.body;
+
+            const [result] = await db.query(
+                'UPDATE usuarios SET nombre = ?, email = ?, telefono = ?, direccion = ?, estado = ? WHERE id = ?',
+                [nombre, email, telefono, direccion, estado, id]
+            );
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+            }
+
+            res.status(200).json({ success: true, message: 'Usuario actualizado correctamente' });
+        } catch (error) {
+            console.error('Error en updateUser:', error.message);
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 
     /**
      * Elimina un usuario
-     * CORRECCIÓN: Tabla 'usuarios'
      */
     static async deleteUser(req, res) {
         try {
@@ -141,7 +150,8 @@ class UserController {
 
             res.status(200).json({ success: true, message: 'Usuario eliminado correctamente' });
         } catch (error) {
-            res.status(500).json({ success: false, message: 'Error interno del servidor' });
+            console.error('Error en deleteUser:', error.message);
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 }
