@@ -10,10 +10,8 @@ class MedicoController {
      */
     static async getAll(req, res) {
         try {
-            // CORRECCIÓN: Usamos id_Medicos según tu Workbench
-            const [rows] = await db.query(
-                'SELECT id_Medicos, nombre, especialidad, telefono, email, estado FROM medicos'
-            );
+            // Usamos * para que traiga todas las columnas sin importar el nombre exacto
+            const [rows] = await db.query('SELECT * FROM medicos');
             
             res.status(200).json({
                 success: true,
@@ -26,17 +24,16 @@ class MedicoController {
     }
 
     /**
-     * Registro de médico con nombres de columna corregidos
+     * Registra un nuevo médico
+     * CORRECCIÓN: Nombres de columnas con Mayúsculas
      */
     static async create(req, res) {
         try {
             const { nombre, especialidad, telefono, email } = req.body;
 
-            // Intentaremos con Mayúsculas, que es el estilo de tu id_Medicos
-            const [result] = await db.query(
-                'INSERT INTO medicos (Nombre, Especialidad, Telefono, Email, Estado) VALUES (?, ?, ?, ?, ?)',
-                [nombre, especialidad, telefono, email, 'activo']
-            );
+            // Intentamos con nombres en Mayúscula (ajusta si en tu Workbench ves otros nombres)
+            const query = 'INSERT INTO medicos (Nombre, Especialidad, Telefono, Email, Estado) VALUES (?, ?, ?, ?, ?)';
+            const [result] = await db.query(query, [nombre, especialidad, telefono, email, 'activo']);
 
             res.status(201).json({
                 success: true,
@@ -44,11 +41,11 @@ class MedicoController {
                 id: result.insertId
             });
         } catch (error) {
-            console.error('Error detallado:', error.message);
+            console.error('Error al insertar médico:', error.message);
             res.status(500).json({ 
                 success: false, 
                 message: 'Fallo en la base de datos',
-                error: error.message // Esto nos dirá qué columna sigue fallando
+                error: error.message // Si falla, Postman te dirá EXACTAMENTE qué columna no reconoce
             });
         }
     }
