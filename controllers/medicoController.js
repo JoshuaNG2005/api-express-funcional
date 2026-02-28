@@ -25,15 +25,14 @@ class MedicoController {
 
     /**
      * Registra un nuevo médico
-     * CORRECCIÓN: Nombres de columnas con Mayúsculas
      */
     static async create(req, res) {
         try {
             const { nombre, especialidad, telefono, email } = req.body;
 
-            // Intentamos con nombres en Mayúscula (ajusta si en tu Workbench ves otros nombres)
-            const query = 'INSERT INTO medicos (Nombre, Especialidad, Telefono, Email, Estado) VALUES (?, ?, ?, ?, ?)';
-            const [result] = await db.query(query, [nombre, especialidad, telefono, email, 'activo']);
+            // Nombres exactos de tu captura de Workbench
+            const query = 'INSERT INTO medicos (nombre, especialidad, telefono, email) VALUES (?, ?, ?, ?)';
+            const [result] = await db.query(query, [nombre, especialidad, telefono, email]);
 
             res.status(201).json({
                 success: true,
@@ -41,11 +40,10 @@ class MedicoController {
                 id: result.insertId
             });
         } catch (error) {
-            console.error('Error al insertar médico:', error.message);
             res.status(500).json({ 
                 success: false, 
                 message: 'Fallo en la base de datos',
-                error: error.message // Si falla, Postman te dirá EXACTAMENTE qué columna no reconoce
+                error: error.message 
             });
         }
     }
