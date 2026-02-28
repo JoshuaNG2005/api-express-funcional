@@ -13,29 +13,16 @@ class CitaController {
             // Consulta SQL uniendo tablas para que los datos sean legibles
             const query = `
                 SELECT 
-                    c.id, c.fecha, c.hora, c.motivo, c.estado,
-                    u.nombre AS nombre_usuario,
-                    m.nombre AS nombre_mascota,
-                    med.nombre AS nombre_medico
+                    c.*, u.nombre as usuario, m.nombre as mascota, med.nombre as medico
                 FROM citas c
-                JOIN usuarios u ON c.id_usuario = u.id
-                JOIN mascotas m ON c.id_mascota = m.id
-                JOIN medicos med ON c.id_medico = med.id_Medicos 
+                LEFT JOIN usuarios u ON c.usuario_id = u.id
+                LEFT JOIN mascotas m ON c.mascota_id = m.id
+                LEFT JOIN medicos med ON c.id_Medicos = med.id_Medicos
             `;
             const [rows] = await db.query(query);
-            
-            res.status(200).json({
-                success: true,
-                message: 'Citas obtenidas correctamente',
-                data: rows
-            });
+            res.status(200).json({ success: true, data: rows });
         } catch (error) {
-            console.error('Error en CitaController.getAll:', error.message);
-            res.status(500).json({ 
-                success: false, 
-                message: 'Error al obtener las citas',
-                error: error.message 
-            });
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 
@@ -44,28 +31,12 @@ class CitaController {
      */
     static async create(req, res) {
         try {
-            // Ajustamos los nombres a como los tienes en la DB (usuario_id)
-            const { usuario_id, mascota_id, medico_id, fecha, hora, motivo } = req.body;
+            const { usuario_id, mascota_id, id_Medicos, fecha, hora, motivo } = req.body;
+            // Ajustamos el INSERT a 'id_Medicos'
+            const query = 'INSERT INTO citas (usuario_id, mascota_id, id_Medicos, fecha, hora, motivo) VALUES (?, ?, ?, ?, ?, ?)';
+            const [result] = await db.query(query, [usuario_id, mascota_id, id_Medicos, fecha, hora, motivo]);
 
-            const query = `
-                INSERT INTO citas (usuario_id, mascota_id, medico_id, fecha, hora, motivo) 
-                VALUES (?, ?, ?, ?, ?, ?)
-            `;
-            
-            const [result] = await db.query(query, [
-                usuario_id, 
-                mascota_id, 
-                medico_id, 
-                fecha, 
-                hora, 
-                motivo
-            ]);
-
-            res.status(201).json({
-                success: true,
-                message: 'Cita creada correctamente',
-                id: result.insertId
-            });
+            res.status(201).json({ success: true, message: 'Cita agendada', id: result.insertId });
         } catch (error) {
             res.status(500).json({ success: false, error: error.message });
         }
