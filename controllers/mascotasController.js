@@ -35,20 +35,18 @@ class MascotaController {
      */
     static async create(req, res) {
         try {
-            const { nombre, especie, raza, id_usuario } = req.body;
+            const { nombre, tipo, raza, edad, peso, usuario_id } = req.body;
 
             // Validación básica
-            if (!nombre || !especie || !id_usuario) {
+            if (!nombre || !tipo || !usuario_id) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Faltan campos obligatorios (nombre, especie, id_usuario)'
+                    message: 'Faltan campos obligatorios (nombre, tipo, usuario_id)'
                 });
             }
 
-            const [result] = await db.query(
-                'INSERT INTO mascotas (nombre, especie, raza, id_usuario) VALUES (?, ?, ?, ?)',
-                [nombre, especie, raza || null, id_usuario]
-            );
+            const query = 'INSERT INTO mascotas (nombre, tipo, raza, edad, peso, usuario_id) VALUES (?, ?, ?, ?, ?, ?)';
+            const [result] = await db.query(query, [nombre, tipo, raza || null, edad || null, peso || null, usuario_id]);
 
             res.status(201).json({
                 success: true,
