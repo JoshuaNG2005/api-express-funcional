@@ -6,40 +6,35 @@ const { pool: db } = require('../config/database');
 
 class MedicoController {
     /**
-     * Obtiene todos los médicos activos
+     * Obtiene todos los médicos
      */
     static async getAll(req, res) {
         try {
-            // Consultamos la tabla 'medicos'
+            // CORRECCIÓN: Usamos id_Medicos según tu Workbench
             const [rows] = await db.query(
-                'SELECT id, nombre, especialidad, telefono, email, estado FROM medicos WHERE estado = "activo"'
+                'SELECT id_Medicos, nombre, especialidad, telefono, email, estado FROM medicos'
             );
             
             res.status(200).json({
                 success: true,
-                count: rows.length,
                 data: rows
             });
         } catch (error) {
             console.error('Error en MedicoController.getAll:', error.message);
-            res.status(500).json({ 
-                success: false, 
-                message: 'Error al obtener la lista de médicos',
-                error: error.message 
-            });
+            res.status(500).json({ success: false, error: error.message });
         }
     }
 
     /**
-     * Registra un nuevo médico
+     * Registro de médico con nombres de columna corregidos
      */
     static async create(req, res) {
         try {
             const { nombre, especialidad, telefono, email } = req.body;
 
-            // Insertamos con los campos de tu tabla
+            // Intentaremos con Mayúsculas, que es el estilo de tu id_Medicos
             const [result] = await db.query(
-                'INSERT INTO medicos (nombre, especialidad, telefono, email, estado) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO medicos (Nombre, Especialidad, Telefono, Email, Estado) VALUES (?, ?, ?, ?, ?)',
                 [nombre, especialidad, telefono, email, 'activo']
             );
 
@@ -49,7 +44,12 @@ class MedicoController {
                 id: result.insertId
             });
         } catch (error) {
-            res.status(500).json({ success: false, error: error.message });
+            console.error('Error detallado:', error.message);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Fallo en la base de datos',
+                error: error.message // Esto nos dirá qué columna sigue fallando
+            });
         }
     }
 }
