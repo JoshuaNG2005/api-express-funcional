@@ -20,7 +20,7 @@ class CitaController {
                 FROM citas c
                 JOIN usuarios u ON c.id_usuario = u.id
                 JOIN mascotas m ON c.id_mascota = m.id
-                JOIN medicos med ON c.id_medico = med.id
+                JOIN medicos med ON c.id_medico = med.id_Medicos 
             `;
             const [rows] = await db.query(query);
             
