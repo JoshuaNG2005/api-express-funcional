@@ -19,8 +19,10 @@ const { validateJSON, sanitizeInput, validateContentType } = require('./middlewa
 
 // Importar rutas
 const userRoutes = require('./routes/userRoutes');
-// ✅ RUTA CORREGIDA: Eliminada la doble barra inicial ('//')
-const authRoutes = require('./routes/authRoutes'); 
+const authRoutes = require('./routes/authRoutes');
+const mascotasRoutes = require('./routes/mascotasRoutes');
+const citasRoutes = require('./routes/citasRoutes');
+const medicosRoutes = require('./routes/medicos');
 
 // Crear aplicación Express
 const app = express();
@@ -119,6 +121,9 @@ app.get('/health', async (req, res) => {
 // Rutas de la API
 app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/auth`, authRoutes);
+app.use(`${API_PREFIX}/mascotas`, mascotasRoutes);
+app.use(`${API_PREFIX}/citas`, citasRoutes);
+app.use(`${API_PREFIX}/medicos`, medicosRoutes);
 
 // Ruta para documentación básica
 app.get('/docs', (req, res) => {
