@@ -13,9 +13,8 @@ class CitaController {
             // Consulta SQL uniendo tablas para que los datos sean legibles
             const query = `
                 SELECT 
-                    c.*, u.nombre as usuario, m.nombre as mascota, med.nombre as medico
+                    c.*, m.nombre as nombre_mascota, med.nombre as nombre_medico
                 FROM citas c
-                LEFT JOIN usuarios u ON c.usuario_id = u.id
                 LEFT JOIN mascotas m ON c.mascota_id = m.id
                 LEFT JOIN medicos med ON c.id_Medicos = med.id_Medicos
             `;
@@ -31,10 +30,22 @@ class CitaController {
      */
     static async create(req, res) {
         try {
-            const { usuario_id, mascota_id, id_Medicos, fecha, hora, motivo } = req.body;
-            // Ajustamos el INSERT a 'id_Medicos'
-            const query = 'INSERT INTO citas (usuario_id, mascota_id, id_Medicos, fecha, hora, motivo) VALUES (?, ?, ?, ?, ?, ?)';
-            const [result] = await db.query(query, [usuario_id, mascota_id, id_Medicos, fecha, hora, motivo]);
+            // Usamos los nombres que aparecen en tu captura de la tabla citas
+            const { usuario_id, mascota_id, fecha, hora, id_Medicos, motivo } = req.body;
+
+            const query = `
+                INSERT INTO citas (usuario_id, mascota_id, fecha, hora, id_Medicos, motivo) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+            
+            const [result] = await db.query(query, [
+                usuario_id, 
+                mascota_id, 
+                fecha, 
+                hora, 
+                id_Medicos, 
+                motivo
+            ]);
 
             res.status(201).json({ success: true, message: 'Cita agendada', id: result.insertId });
         } catch (error) {
