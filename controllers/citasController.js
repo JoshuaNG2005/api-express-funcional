@@ -44,16 +44,26 @@ class CitaController {
      */
     static async create(req, res) {
         try {
-            const { id_usuario, id_mascota, id_medico, fecha, hora, motivo } = req.body;
+            // Ajustamos los nombres a como los tienes en la DB (usuario_id)
+            const { usuario_id, mascota_id, medico_id, fecha, hora, motivo } = req.body;
 
-            const [result] = await db.query(
-                'INSERT INTO citas (id_usuario, id_mascota, id_medico, fecha, hora, motivo, estado) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [id_usuario, id_mascota, id_medico, fecha, hora, motivo, 'programada']
-            );
+            const query = `
+                INSERT INTO citas (usuario_id, mascota_id, medico_id, fecha, hora, motivo) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+            
+            const [result] = await db.query(query, [
+                usuario_id, 
+                mascota_id, 
+                medico_id, 
+                fecha, 
+                hora, 
+                motivo
+            ]);
 
             res.status(201).json({
                 success: true,
-                message: 'Cita programada con éxito',
+                message: 'Cita creada correctamente',
                 id: result.insertId
             });
         } catch (error) {
